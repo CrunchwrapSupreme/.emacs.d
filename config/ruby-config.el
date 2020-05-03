@@ -18,9 +18,8 @@
                   (progn (robe-start t) (setq is-robe-running t)))))
   :hook (after-save . (lambda()
                         (when (eq major-mode 'enh-ruby-mode) (ruby-load-file))))
-  :custom
-  (is-robe-running nil)
   :config
+  (is-robe-running nil)
   (eval-after-load 'company '(push 'company-robe company-backends))
   (defadvice inf-ruby-console-auto (before activate-rvm-for-robe activate)
     (rvm-activate-corresponding-ruby)))
