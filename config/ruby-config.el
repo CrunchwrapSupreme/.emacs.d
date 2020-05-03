@@ -11,13 +11,13 @@
 (use-package robe
   :bind ("C-c r r" . inf-ruby)
   :hook enh-ruby-mode
-  :hook (after-save . (lambda()
-                        (when (eq major-mode 'enh-ruby-mode) (ruby-load-file))))
   :hook (enh-ruby-mode . (lambda ()
               (setq tab-width 4)
               (robe-mode)
               (if (not is-robe-running)
                   (progn (robe-start t) (setq is-robe-running t)))))
+  :hook (after-save . (lambda()
+                        (when (eq major-mode 'enh-ruby-mode) (ruby-load-file))))
   :custom
   (is-robe-running nil)
   :config
