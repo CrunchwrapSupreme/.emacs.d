@@ -44,11 +44,13 @@ There are two things you can do about this warning:
 (load "global")
 (load "ruby-config")
 
-(setq server-use-tcp nil)
-(setq server-socket-dir "~/.emacs.d/daemon")
-(if (not (server-running-p))
-    (server-start))
-(message "Emacs daemon via %" (server-name))
+(use-package server
+  :config
+  (setq server-use-tcp nil)
+  (setq server-socket-dir "~/.emacs.d/daemon")
+  (unless (server-running-p)
+    (server-start)
+    (message "Emacs daemon via [%s]" server-name)))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
