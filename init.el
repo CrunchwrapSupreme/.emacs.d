@@ -16,8 +16,6 @@ There are two things you can do about this warning:
     ;; For important compatibility libraries like cl-lib
     (add-to-list 'package-archives (cons "gnu" (concat proto "://elpa.gnu.org/packages/")))))
 
-(package-initialize)
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -27,22 +25,30 @@ There are two things you can do about this warning:
  '(feature-default-language "fi" t)
  '(feature-step-search-gems-path "gems/ruby/*/gems/*/**/*steps.rb" t)
  '(feature-step-search-path "features/**/*steps.rb" t)
- '(helm-M-x-fuzzy-match t t)
+ '(helm-M-x-fuzzy-match t)
  '(helm-autoresize-max-height 20)
  '(helm-autoresize-min-height 15)
  '(helm-autoresize-mode t)
  '(package-selected-packages
    (quote
-    (moody helm-company persp-projectile use-package solarized-theme magit enh-ruby-mode helm-projectile cargo rust-mode rtags projectile-rails projectile company ruby-end robe)))
+    (treemacs-projectile moody helm-company persp-projectile use-package solarized-theme magit enh-ruby-mode helm-projectile cargo rust-mode rtags projectile-rails projectile company ruby-end robe)))
  '(projectile-completion-system (quote helm)))
 
+(package-initialize)
 (eval-when-compile
   (require 'use-package))
 ;; (require 'use-package-ensure)
 ;; (setq use-package-always-ensure t)
 
+(add-to-list 'load-path "~/.emacs.d/config")
 (load "global")
 (load "ruby-config")
+
+(setq server-use-tcp nil)
+(setq server-socket-dir "~/.emacs.d/daemon")
+(if (not (server-running-p))
+    (server-start))
+(message "Emacs daemon via %" (server-name))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
