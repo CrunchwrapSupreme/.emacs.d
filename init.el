@@ -31,7 +31,7 @@ There are two things you can do about this warning:
  '(helm-autoresize-mode t)
  '(package-selected-packages
    (quote
-    (treemacs-projectile moody helm-company persp-projectile use-package solarized-theme magit enh-ruby-mode helm-projectile cargo rust-mode rtags projectile-rails projectile company ruby-end robe)))
+    (exec-path-from-shell moody helm-company use-package solarized-theme magit enh-ruby-mode helm-projectile cargo rust-mode rtags projectile company ruby-end robe)))
  '(projectile-completion-system (quote helm)))
 
 (package-initialize)
@@ -39,6 +39,15 @@ There are two things you can do about this warning:
   (require 'use-package))
 ;; (require 'use-package-ensure)
 ;; (setq use-package-always-ensure t)
+
+;; OSX Path Fix
+(use-package exec-path-from-shell
+  :config
+  (when (memq window-system '(mac ns))
+    (exec-path-from-shell-initialize)))
+
+(setenv "VISUAL" "emacsclient -n -s ~/emacs.d/daemon")
+(setenv "EDITOR" (getenv "VISUAL"))
 
 (add-to-list 'load-path "~/.emacs.d/config")
 (load "global")

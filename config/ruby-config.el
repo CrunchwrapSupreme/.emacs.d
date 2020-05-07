@@ -3,26 +3,56 @@
 (add-to-list 'load-path "~/.emacs.d/yard-mode.el")
 (add-to-list 'load-path "~/.emacs.d/robe")
 
+;; RVM Mode
+(use-package rvm
+  :config
+  (rvm-use-default))
+
 ;; Yard Mode
 (use-package yard-mode
+  :disabled
   :hook enh-ruby-mode)
 
-;; Robe
-(use-package robe
-  :bind ("C-c r r" . inf-ruby)
-  :hook enh-ruby-mode
-  :hook (enh-ruby-mode . (lambda ()
-              (setq tab-width 4)
-              (robe-mode)
-              (if (not is-robe-running)
-                  (progn (robe-start t) (setq is-robe-running t)))))
-  :hook (after-save . (lambda()
-                        (when (eq major-mode 'enh-ruby-mode) (ruby-load-file))))
+;; Rubocop Linting
+(use-package rubocop
+  :disabled
+  :hook enh-ruby-mode)
+
+;; Bundler
+(use-package bundler
+  :disabled
+  :hook enh-ruby-mode)
+
+;; Ruby-test
+(use-package ruby-test
+  :disabled
+  :hook enh-ruby-mode)
+
+(use-package rake
+  :disabled
   :config
-  (is-robe-running nil)
-  (eval-after-load 'company '(push 'company-robe company-backends))
+  (setq rake-completion-system 'helm)
+  (define-key enh-ruby-mode-map (kbd "C-!") 'rake))
+
+(defun projectile-after-switch-robe()
+  (message "Attempting to start robe ruby server")
+  (robe-mode)
+  (unless robe-running
+    (robe-start t)))
+
+;; Robe
+;;Starts robe on enh-ruby-mode hook
+;;Reloads enh-ruby-mode files
+(use-package robe
+  :disabled
+  :bind ("C-c r r" . inf-ruby)
+  :hook (enh-ruby-mode . robe-mode)
+  :hook (after-save . (lambda()
+                        (when (eq major-mode 'enh-ruby-mode) (ruby-load-file buffer-file-name))))
+  :config
   (defadvice inf-ruby-console-auto (before activate-rvm-for-robe activate)
-    (rvm-activate-corresponding-ruby)))
+    (rvm-activate-corresponding-ruby))
+  (eval-after-load 'company '(push 'company-robe company-backends)))
 
 ;; Feature Mode
 (use-package feature-mode
@@ -31,15 +61,14 @@
   (feature-default-language "fi")
   (feature-step-search-path "features/**/*steps.rb")
   (feature-step-search-gems-path "gems/ruby/*/gems/*/**/*steps.rb")
+  :custom
+  (feature-default-language "en")
+  (feature-use-rvm t)
   :config
   (add-hook 'feature-mode-hook
             (lambda ()
-              (setq tab-width 2))))
-
-;; RVM Mode
-(use-package rvm
-  :config
-  (rvm-use-default))
+              (setq-default tab-width 2)
+              (setq-default indent-tabs-mode nil))))
 
 ;; Enh Ruby Mode
 (use-package enh-ruby-mode
@@ -48,4 +77,65 @@
   :init
   (autoload 'enh-ruby-mode "enh-ruby-mode" "Major mode for ruby files" t)
   :config
-  (remove-hook 'enh-ruby-mode-hook 'erm-define-faces))
+  ;; (projectile-register-project-type 'cucumber '("features")
+  ;;                                   :compile "rubocop --auto-correct-safe"
+  ;;                                   :test-suffix ".feature"
+  ;;                                   :test "cucumber -p headless-staging"
+  ;;                                   :test-dir "features")
+
+  ;;(add-hook 'enh-ruby-mode-hook 'erm-define-faces)
+  ;;(remove-hook 'enh-ruby-mode-hook 'erm-define-faces)
+  (add-hook 'enh-ruby-mode-hook
+            (lambda ()
+              (setq tab-width 4))))
+
+(defun stop-yardoc-server()
+  "Stop the yard documentation server"
+  (interactive)
+  (if (get-buffer "*yard server*")
+      ((delete-process "*yard server*")
+       (kill-buffer "*yard server*"))))
+
+(defun start-yardoc-server()
+  "Start the yard server --gem documentation server"
+  (interactive)
+  (stop-yardoc-server)
+  (if (executable-find "yard")
+      ((start-process "yardserver" "*yard server*" "yard" "server" "--gems")
+       (with-current-buffer (get-buffer "*yard server*")
+         (read-only-mode t)))
+    (warn "Could not find yard in path")))
+
+(defun stop-cuke-run()
+  "Stop the current cucumber process if running and/or removes buffer if it exists"
+  (interactive)
+  (if ((get-buffer "*cucumber run*")
+      (if (get-process "cuketest") (delete-process "cuketest"))
+      (kill-buffer "*cucumber run*"))))
+
+(defun buffer-lino-to-str()
+  (interactive)
+  (concat buffer-file-name ":" (number-to-string (line-number-at-pos))))
+
+(defun cuke-run-to-log ()
+  (interactive)
+  (with-current-buffer (get-buffer-create "*Cucumber Log*")`
+    (flush-lines "Process .* finished")
+    (if (get-buffer "*cucumber run*") (insert-buffer "*cucumber run*"))))
+
+(require 'ansi-color)
+(defun run-cuke-f()
+  "Run feature at line"
+  (interactive)
+  (when (and (derived-mode-p 'feature-mode) (not (get-process "cuketest")))
+    (cuke-run-to-log)
+    (let ((default-directory (projectile-project-root)))
+      (start-process "cuketest" "*cucumber run*" "cucumber" "-p" "headless-qa" (buffer-lino-to-str)))
+    (display-buffer-below-selected (get-buffer "*cucumber run*") '((window-height . 30)))
+    (with-current-buffer (get-buffer "*cucumber run*")
+      (read-only-mode nil)
+      (erase-buffer)
+      (read-only-mode t)
+      (ansi-color-for-comint-mode-on)
+      (comint-mode)
+      (set-process-filter (get-process "cuketest") 'comint-output-filter))))
