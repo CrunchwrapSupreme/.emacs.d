@@ -14,9 +14,8 @@
   :hook enh-ruby-mode)
 
 ;; Rubocop Linting
-(use-package rubocop
-  :disabled
-  :hook enh-ruby-mode)
+(use-package rubocop)
+
 
 ;; Bundler
 (use-package bundler
@@ -34,11 +33,11 @@
   (setq rake-completion-system 'helm)
   (define-key enh-ruby-mode-map (kbd "C-!") 'rake))
 
-(defun projectile-after-switch-robe()
-  (message "Attempting to start robe ruby server")
-  (robe-mode)
-  (unless robe-running
-    (robe-start t)))
+;; (defun projectile-after-switch-robe()
+;;   (message "Attempting to start robe ruby server")
+;;   (robe-mode)
+;;   (unless robe-running
+;;     (robe-start t)))
 
 ;; Robe
 ;;Starts robe on enh-ruby-mode hook
@@ -50,8 +49,7 @@
   :hook (after-save . (lambda()
                         (when (eq major-mode 'enh-ruby-mode) (ruby-load-file buffer-file-name))))
   :config
-  (defadvice inf-ruby-console-auto (before activate-rvm-for-robe activate)
-    (rvm-activate-corresponding-ruby))
+  (advice-add 'inf-ruby-console-auto :before #'rvm-activate-corresponding-ruby)
   (eval-after-load 'company '(push 'company-robe company-backends)))
 
 ;; Feature Mode
@@ -61,7 +59,7 @@
   (feature-default-language "fi")
   (feature-step-search-path "features/**/*steps.rb")
   (feature-step-search-gems-path "gems/ruby/*/gems/*/**/*steps.rb")
-  :custom
+  (feature-use-docker-compose nil)
   (feature-default-language "en")
   (feature-use-rvm t)
   :config
@@ -93,25 +91,31 @@
   "Stop the yard documentation server"
   (interactive)
   (if (get-buffer "*yard server*")
-      ((delete-process "*yard server*")
-       (kill-buffer "*yard server*"))))
+      (progn
+        (message "Stopping yard server on *yard server*...")
+        (delete-process "*yard server*")
+        (kill-buffer "*yard server*"))))
 
 (defun start-yardoc-server()
   "Start the yard server --gem documentation server"
   (interactive)
   (stop-yardoc-server)
   (if (executable-find "yard")
-      ((start-process "yardserver" "*yard server*" "yard" "server" "--gems")
-       (with-current-buffer (get-buffer "*yard server*")
-         (read-only-mode t)))
+      (progn
+        (start-process "yardserver" "*yard server*" "yard" "server" "--gems")
+        (with-current-buffer (get-buffer "*yard server*")
+          (read-only-mode t))
+        (message "Starting yard server on *yard server*..."))
     (warn "Could not find yard in path")))
 
 (defun stop-cuke-run()
   "Stop the current cucumber process if running and/or removes buffer if it exists"
   (interactive)
-  (if ((get-buffer "*cucumber run*")
-      (if (get-process "cuketest") (delete-process "cuketest"))
-      (kill-buffer "*cucumber run*"))))
+  (if (get-buffer "*cucumber run*")
+      (progn
+        (message "If started, stopping yard server on *yard server*...")
+        (if (get-process "cuketest") (delete-process "cuketest"))
+        (kill-buffer "*cucumber run*"))))
 
 (defun buffer-lino-to-str()
   (interactive)
@@ -121,14 +125,16 @@
   (interactive)
   (with-current-buffer (get-buffer-create "*Cucumber Log*")`
     (flush-lines "Process .* finished")
-    (if (get-buffer "*cucumber run*") (insert-buffer "*cucumber run*"))))
+    (if (get-buffer "*cucumber run*")
+        (read-only-mode nil)
+        (insert-buffer-substring "*cucumber run*"))))
 
 (require 'ansi-color)
 (defun run-cuke-f()
   "Run feature at line"
   (interactive)
   (when (and (derived-mode-p 'feature-mode) (not (get-process "cuketest")))
-    (cuke-run-to-log)
+    ;; (cuke-run-to-log)
     (let ((default-directory (projectile-project-root)))
       (start-process "cuketest" "*cucumber run*" "cucumber" "-p" "headless-qa" (buffer-lino-to-str)))
     (display-buffer-below-selected (get-buffer "*cucumber run*") '((window-height . 30)))

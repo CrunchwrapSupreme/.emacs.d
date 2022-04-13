@@ -1,17 +1,25 @@
 (add-to-list 'load-path "~/.emacs.d/emacs-async")
 (add-to-list 'load-path "~/.emacs.d/popup-el")
-(add-to-list 'load-path "~/.emacs.d/helm")
+; (add-to-list 'load-path "~/.emacs.d/helm")
 (add-to-list 'load-path "~/.emacs.d/moody")
+
+(use-package yaml
+  :mode ("\.yml$" . yaml-mode))
 
 ;; Magit Config
 (use-package magit
   :bind ("C-x g" . magit-status))
 
+(use-package company-c-headers)
+
 ;; Company Mode Config
 (use-package company
   :custom
   (company-idle-delay 0)
+  :bind (:map company-active-map ("<tab>" . company-complete-selection))
   :config
+  (add-to-list 'company-backends 'company-c-headers)
+  (add-to-list 'company-c-headers-path-system "")
   (global-company-mode t))
 
 ;; Helm Config
@@ -70,19 +78,6 @@
   (moody-replace-mode-line-buffer-identification)
   (moody-replace-vc-mode))
 
-;; (defvar moody-projectile-line
-;;   ;;'(:eval (moody-ribbon (substring vc-mode 1) nil 'up))
-;;   '(:eval (moody-tab (substring projectile-mode-line-function 1) nil 'up)))
-;; (put 'moody-projectile-line 'risky-local-variable t)
-;; (make-variable-buffer-local 'moody-projectile-line)
-
-;; (defun moody-replace-projectile-line (&optional reverse)
-;;   (interactive "P")
-;;   (moody-replace-element '(projectile-mode-line-function projectile-mode-line-function)
-;;                          '(projectile-mode-line-function moody-projectile-line)
-;;                          reverse))
-;; (moody-replace-projectile-line)
-
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (global-linum-mode t)
 (setq backup-directory-alist
@@ -96,12 +91,18 @@
 (setq auto-save-default t)
 (setq ring-bell-function 'ignore)
 (setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
+(setq-default tab-width 2)
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (toggle-scroll-bar -1)
-(setq split-height-threshold 160)
-(setq split-width-threshold 80)
+;; (setq split-height-threshold 160)
+;; (setq split-width-threshold 80)
+(add-hook 'groovy-mode-hook
+          (lambda ()
+            (c-set-offset 'label 4)))
+
+(setq org-todo-keywords
+      '((sequence "TODO" "IN-PROGRESS" "WORKED" "REVIEWED" "|" "DONE" "DELEGATED")))
 
 (defun kill-other-buffers ()
   "Kill all inactive buffers"
@@ -115,16 +116,3 @@
   (when (or (derived-mode-p 'prog-mode) (derived-mode-p 'feature-mode))
     (delete-trailing-whitespace)))
 (add-hook 'after-save-hook 'hook-delete-whitespace)
-
-;; (defun magit-display-buffer-traditional (buffer)
-;;   "Display BUFFER the way this has traditionally been done."
-;;   (display-buffer
-;;    buffer (if (and (derived-mode-p 'magit-mode)
-;;                    (not (memq (with-current-buffer buffer major-mode)
-;;                               '(magit-process-mode
-;;                                 magit-revision-mode
-;;                                 magit-diff-mode
-;;                                 magit-stash-mode
-;;                                 magit-status-mode))))
-;;               '(display-buffer-same-window)
-;;             nil))) ; display in another window

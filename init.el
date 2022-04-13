@@ -21,18 +21,18 @@ There are two things you can do about this warning:
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(company-idle-delay 0)
- '(feature-default-language "fi" t)
- '(feature-step-search-gems-path "gems/ruby/*/gems/*/**/*steps.rb" t)
- '(feature-step-search-path "features/**/*steps.rb" t)
- '(helm-M-x-fuzzy-match t)
- '(helm-autoresize-max-height 20)
- '(helm-autoresize-min-height 15)
- '(helm-autoresize-mode t)
+ '(company-idle-delay 0 nil nil "Customized with use-package company")
+ '(helm-M-x-fuzzy-match t nil nil "Customized with use-package helm")
+ '(helm-autoresize-max-height 20 nil nil "Customized with use-package helm")
+ '(helm-autoresize-min-height 15 nil nil "Customized with use-package helm")
+ '(helm-autoresize-mode t nil nil "Customized with use-package helm")
+ '(helm-buffers-fuzzy-matching t nil nil "Customized with use-package helm")
+ '(helm-imenu-fuzzy-match t t nil "Customized with use-package helm")
+ '(helm-recentf-fuzzy-match t nil nil "Customized with use-package helm")
+ '(helm-semantic-fuzzy-match t t nil "Customized with use-package helm")
  '(package-selected-packages
-   (quote
-    (exec-path-from-shell moody helm-company use-package solarized-theme magit enh-ruby-mode helm-projectile cargo rust-mode rtags projectile company ruby-end robe)))
- '(projectile-completion-system (quote helm)))
+   '(elpy yasnippet rustic flycheck-rust helm-rg dockerfile-mode jenkinsfile-mode ranger ag tide feature-mode company-c-headers groovy-mode wgrep-helm helm-ag flycheck lsp-ui company-lsp prettier-js add-node-modules-path typescript-mode rjsx-mode lsp-mode rubocop yaml-mode exec-path-from-shell moody helm-company use-package solarized-theme magit enh-ruby-mode helm-projectile cargo rust-mode rtags projectile company ruby-end robe))
+ '(projectile-completion-system 'helm))
 
 (package-initialize)
 (eval-when-compile
@@ -46,21 +46,24 @@ There are two things you can do about this warning:
   (when (memq window-system '(mac ns))
     (exec-path-from-shell-initialize)))
 
-(setenv "VISUAL" "emacsclient -n -s ~/emacs.d/daemon")
+(setenv "VISUAL" (substitute-in-file-name "emacsclient -s $HOME/emacs.d/daemon/server"))
 (setenv "EDITOR" (getenv "VISUAL"))
 
 (add-to-list 'load-path "~/.emacs.d/config")
 (load "global")
 (load "ruby-config")
+(load "javascript")
+(load "rust-config")
+(load "python-config")
 
-(use-package server
-  :config
-  (setq server-use-tcp nil)
-  (setq server-socket-dir "~/.emacs.d/daemon")
-  (unless (server-running-p)
-    (server-start)
-    (message "Emacs daemon via [%s]" server-name)))
-
+;; (use-package server
+;;   :config
+;;   (setq server-use-tcp nil)
+;;   (setq server-socket-dir (substitute-in-file-name "$HOME/.emacs.d/daemon"))
+;;   (setq server-name "server")
+;;   (unless (server-running-p)
+;;     (server-start)
+;;     (message "Emacs daemon via [%s]" (concat server-socket-dir "/" "server"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
